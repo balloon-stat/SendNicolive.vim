@@ -1,46 +1,49 @@
 SendNicolive.vim
 ================
 
-vim����j�R�j�R�������փR�����g���邽�߂�Web�T�[�o��vim���̃N���C�A���g�ł��B
+vimからニコニコ生放送へコメントするためのWebサーバとvim側のクライアントです。
 
-���[�J��Web�T�[�o�̎���
------------------------
+##### ローカルWebサーバの実行
 
-SendNicolive.cs��Web�T�[�o�̃\�[�X�R�[�h�ł��B  
-SendNicolive.cs���R���p�C�����āA�����ɕK�v�ȏ���t���Ď��s���Ă��������B  
-������s���́A  
+SendNicolive.csがWebサーバのソースコードです。  
+SendNicolive.csをコンパイルして、引数に必要な情報を付けて実行してください。  
+初回実行時は、  
 
+```
 SendNicolive http://localhost:8000/ --cookie <nico-cookie>
+```
 
-�Ƃ��āA�N�b�L�[��^���邩�A�������́A
+として、クッキーを与えるか、もしくは、
 
+```
 SendNicolive http://localhost:8000/ --login <email-address> <password>
+```
 
-�Ƃ��ăj�R�j�R�փ��O�C�����Ă��������B  
-���O�C���ł���΃z�[���f�B���N�g���ɃN�b�L�[�̏�񂪕ۑ������̂Ŏ��񂩂�́A
+としてニコニコへログインしてください。  
+ログインできればホームディレクトリにクッキーの情報が保存されるので次回からは、
 
 SendNicolive http://localhost:8000/ --continue
 
-�Ƃ���Εۑ����ꂽ�N�b�L�[���g���܂��B
+とすれば保存されたクッキーを使います。
 
-�R�����g�T�[�o�ւ̐ڑ�
-----------------------
+##### コメントサーバへの接続
 
-�ȉ��̃����N�̃u�b�N�}�[�N���b�g�����̂��������߂ł��B
+以下のリンクのブックマークレットを作るのがおすすめです。
 
-<a href="javascript:(function(){var%20url=location.href.substring(0,location.href.indexOf("?")).replace("live.nicovideo.jp/watch/","localhost:8000/connect?");var%20xhr=new%20XMLHttpRequest();xhr.open('GET',url,true);xhr.send();})()">
-    connect
-</a>
+[connect](javascript:(function(){var%20url=location.href.substring(0,location.href.indexOf("?")).replace("live.nicovideo.jp/watch/","localhost:8000/connect?");var%20xhr=new%20XMLHttpRequest();xhr.open('GET',url,true);xhr.send();})())
 
-�����y�[�W���J������Ƀu�b�N�}�[�N���b�g�����s�����  
-SendNicolive���j�R�j�R�̃R�����g�T�[�o�ɐڑ����܂��B  
+放送ページを開いた後にブックマークレットを実行すると  
+SendNicoliveがニコニコのコメントサーバに接続します。  
 
-vim��  
-:SendToLive {string}<CR>  
-�Ƃ����{string}�ƃR�����g���܂��B
+vimで  
 
-vim�̐ݒ��
------------
+```
+:SendToLive {string}  
+```
+
+とすると{string}とコメントします。
+
+##### vimの設定例
 
 nnoremap gl :<C-u>SendToLive <C-^>
 
