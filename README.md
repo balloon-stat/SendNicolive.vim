@@ -30,7 +30,7 @@ SendNicolive http://localhost:8000/ --continue
 
 #### コメントサーバへの接続
 
-以下のリンクのブックマークレットを作るのがおすすめです。
+以下の内容のブックマークレットを作るのがおすすめです。
 
 ```
 javascript:(function(){var%20url=location.href.substring(0,location.href.indexOf("?")).replace("live.nicovideo.jp/watch/","localhost:8000/connect?");var%20xhr=new%20XMLHttpRequest();xhr.open('GET',url,true);xhr.send();})()
@@ -39,13 +39,13 @@ javascript:(function(){var%20url=location.href.substring(0,location.href.indexOf
 放送ページを開いた後にブックマークレットを実行すると  
 SendNicoliveがニコニコのコメントサーバに接続します。  
 
-vimで  
+無事、接続すればvimで  
 
 ```
 :SendToLive {string}  
 ```
 
-とすると`{string}`とコメントします。
+とすると`{string}`とコメントできます。
 
 #### vimの設定例
 
