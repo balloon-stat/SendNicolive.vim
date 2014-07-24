@@ -20,6 +20,8 @@ SendNicolive http://localhost:8000/ --login <email-address> <password>
 ```
 
 としてニコニコへログインしてください。  
+<nico-cookie>はキーuser_sessionの値です。
+
 ログインできればホームディレクトリにクッキーの情報が保存されるので次回からは、
 
 ```
@@ -47,11 +49,31 @@ SendNicoliveがニコニコのコメントサーバに接続します。
 
 とすると`{string}`とコメントできます。
 
+デフォルトでは184の設定になっています。
+
+```
+:SetNoAnonymaous
+```
+
+で184の解除、
+
+```
+:SetAnonymaous
+```
+
+で184の再設定、
+
+```
+:IsAnonymaous
+```
+
+で確認ができます。
+
 #### vimの設定例
+
+例えば、以下のような設定をvimrcに書いておくと便利です。
 
 ```
 nnoremap gl :<C-u>SendToLive <C-^>
 ```
-
-
 
