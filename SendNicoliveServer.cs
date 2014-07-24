@@ -14,7 +14,7 @@ namespace SendNicolive
     class SendNicolive
     {
         static CookieContainer ccNico;
-        static string ckfile = Path.Combine(userDirectory(), ".cookie.dat");
+        static string ckfile = Path.Combine(UserDirectory(), ".cookie.dat");
 
         static void Main(string[] args)
         {
@@ -62,9 +62,7 @@ namespace SendNicolive
                     ccNico = readCookie(ckfile);
                 else
                     Console.WriteLine("Can not found '.cookie.dat'");
-                if (NicoliveAPI.IsLogin(ccNico))
-                    Console.WriteLine("ok");
-                else
+                if (!NicoliveAPI.IsLogin(ccNico))
                 {
                     Console.WriteLine("Try to login...");
                     if (mail == "" || password == "")
@@ -88,7 +86,7 @@ namespace SendNicolive
             }
         }
 
-        static string userDirectory()
+        public static string UserDirectory()
         {
             return (Environment.OSVersion.Platform == PlatformID.Unix || Environment.OSVersion.Platform == PlatformID.MacOSX)
                 ? Environment.GetEnvironmentVariable("HOME")
@@ -138,7 +136,6 @@ namespace SendNicolive
         string postkey;
         CookieContainer ccNico;
         CommentSocket csock;
-        public bool IsAnonymous;
 
         public CommentClient(string lvID, CookieContainer cc)
         {
@@ -152,7 +149,6 @@ namespace SendNicolive
             userID = info["user_id"];
             csock = new CommentSocket(addr, port, thread);
             token = NicoliveAPI.GetToken(lvID, cc);
-            IsAnonymous = true;
         }
 
         public void Dispose()
@@ -160,24 +156,27 @@ namespace SendNicolive
             csock.Disconnect();
         }
 
-        public void Send(string comment)
+        public void Send(string comment, bool anonym)
         {
             if (comment == "")
                 return;
 
             if (token == "")
-                listenerComment(comment);
+                listenerComment(comment, anonym);
             else
                 publisherComment(comment);
         }
 
-        void listenerComment(string comment)
+        void listenerComment(string comment, bool anonym)
         {
             csock.Send("");
             var count = csock.Receive();
             var curCount = int.Parse(count);
-            if (curCount - cntBlock * 100 > 100)
+            if (postkey == null || curCount - cntBlock * 100 > 100)
+            {
                 postkey = NicoliveAPI.GetPostKey(count, thread, ccNico);
+                cntBlock = curCount / 100;
+            }
             if (postkey == "")
             {
                 Console.WriteLine("Can not get postkey.");
@@ -185,7 +184,7 @@ namespace SendNicolive
             }
 
             var anonymous = "";
-            if (IsAnonymous)
+            if (anonym)
             {
                 anonymous = "mail=\"184\"";
             }
@@ -298,9 +297,7 @@ namespace SendNicolive
                 var url = String.Format("http://live.nicovideo.jp/api/getpostkey?thread={0}&block_no={1}",
                                 thread, block_no);
 
-                var xdoc = XDocument.Parse(get(url, ref cc));
-                var postkey = xdoc.Root.Value.ToString();
-                return postkey.Replace("postkey=", "");
+                return get(url, ref cc).Replace("postkey=", "");
             }
             catch (Exception e)
             {
@@ -391,27 +388,28 @@ namespace SendNicolive
             try
             {
                 var bufsize = 1024;
-                byte[] buf = new byte[bufsize];
-                sock.Receive(buf);
-                var res = Encoding.UTF8.GetString(buf).Split('\0');
-                var th = XElement.Parse(res[0]);			
+                var buf = new byte[bufsize];
+                var res = "";
+                while (res.Length == 0)
+                {
+                    sock.Receive(buf);
+                    res = Encoding.UTF8.GetString(buf).Trim('\0');
+                }
+                var th = XElement.Parse(res.Split('\0')[0]);			
                 Ticket = th.Attribute("ticket").Value;
                 SrvTime = th.Attribute("server_time").Value;
+                var no = th.Attribute("last_res");
                 DateTimeStart = DateTime.Now;
-                foreach (var line in res)
-                    Console.Write(line);
 
-                if (res.Length > 2 && res[1].StartsWith("<chat>"))
-                {
-                    var chat = XElement.Parse(res[1]);
-                    return chat.Attribute("no").Value;
-                }
-                return "0";
+                if (no != null)
+                    return no.Value;
+                else
+                    return "0";
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
-                return "0";
+                return "-1";
             }
         }
 
@@ -431,6 +429,8 @@ namespace SendNicolive
     {
         static HttpListener listener;
         static CommentClient cli;
+        static string noAnonymaousFile = Path.Combine(".nicolive_no_anonymous", SendNicolive.UserDirectory());
+        static bool IsAnonymous = !File.Exists(noAnonymaousFile);
 
         public static void Start(string prefix, CookieContainer cc)
         {
@@ -453,8 +453,30 @@ namespace SendNicolive
                         cli = new CommentClient(qry[1], cc);
                         Console.WriteLine("Connect: " + qry[1]);
                     }
+                    else if (qry[0] == "set")
+                    {
+                        if (qry[1] == "anonymous")
+                        {
+                            IsAnonymous = true;
+                            Console.WriteLine("Setting is anonymous.");
+                        }
+                        if (qry[1] == "noanonymous")
+                        {
+                            IsAnonymous = false;
+                            Console.WriteLine("Setting is not anonymous.");
+                        }
+                        if (qry[1] == "isanonymous")
+                        {
+                            Console.WriteLine("Anonymous: " + IsAnonymous);
+                        }
+                    }
                     else if (qry[0] == "send")
-                        cli.Send(Uri.UnescapeDataString(qry[1]));
+                    {
+                        if (cli == null)
+                            Console.WriteLine("no connect");
+                        else
+                            cli.Send(Uri.UnescapeDataString(qry[1]), IsAnonymous);
+                    }
                     var result = Encoding.UTF8.GetBytes("ok");
                     res.OutputStream.Write(result, 0, result.Length);
                     res.Close();
