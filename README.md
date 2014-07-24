@@ -20,7 +20,7 @@ SendNicolive http://localhost:8000/ --login <email-address> <password>
 ```
 
 としてニコニコへログインしてください。  
-<nico-cookie>はキーuser_sessionの値です。
+`<nico-cookie>`はキーuser_sessionの値です。
 
 ログインできればホームディレクトリにクッキーの情報が保存されるので次回からは、
 
