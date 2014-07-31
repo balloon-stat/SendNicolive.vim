@@ -1,70 +1,56 @@
 SendNicolive.vim
 ================
 
-vimからニコニコ生放送へコメントするためのWebサーバとvim側のクライアントです。
+vimからニコニコ生放送へコメントするためのHTTPサーバとvim側のクライアントです。
 
-#### ローカルWebサーバの実行
+#### ローカルHTTPサーバの実行
 
-SendNicolive.csがWebサーバのソースコードです。  
-SendNicolive.csをコンパイルして、引数に必要な情報を付けて実行してください。  
-初回実行時は、  
-
-```
-SendNicolive http://localhost:8000/ --cookie <nico-cookie>
-```
-
-として、クッキーを与えるか、もしくは、
+サーバはPython版とC#版があります。  
+Python版は2.7でのみ動作確認をしています。  
+if_pythonが使えるならば、  
 
 ```
-SendNicolive http://localhost:8000/ --login <email-address> <password>
+:SendliveRun
 ```
 
-としてニコニコへログインしてください。  
-`<nico-cookie>`はキーuser_sessionの値です。
+でサーバが立ち上がります。
 
-ログインできればホームディレクトリにクッキーの情報が保存されるので次回からは、
-
-```
-SendNicolive http://localhost:8000/ --continue
-```
-
-とすれば保存されたクッキーを使います。
+C#版はコンパイルして実行する必要があります。  
+SendNicolive.csがサーバのソースコードです。  
 
 #### コメントサーバへの接続
 
 以下の内容のブックマークレットを作るのがおすすめです。
 
 ```
-javascript:(function(){var%20url=location.href.substring(0,location.href.indexOf("?")).replace("live.nicovideo.jp/watch/","localhost:8000/connect?");var%20xhr=new%20XMLHttpRequest();xhr.open('GET',url,true);xhr.send();})()
+javascript:(function(){if(location.href.indexOf("live.nicovideo.jp")==-1){alert("Run%20with%20live.nicovideo.jp");return;}var%20ck=document.cookie;var%20idx=ck.indexOf("user_session");var%20ckVal=ck.substring(idx,ck.indexOf(";",idx)).replace("user_session=","");var%20url=location.href.substring(0,location.href.indexOf("?")).replace("live.nicovideo.jp/watch/","localhost:8000/connect?")+"="+ckVal;var%20xhr=new%20XMLHttpRequest();xhr.open("GET",url,true);xhr.send();})()
 ```
 
 放送ページを開いた後にブックマークレットを実行すると  
 SendNicoliveがニコニコのコメントサーバに接続します。  
 
-無事、接続すればvimで  
+無事、接続できればvimで  
 
 ```
-:SendToLive {string}  
+:SendliveMessage {string}  
 ```
 
 とすると`{string}`とコメントできます。
 
-デフォルトでは184の設定になっています。
-
 ```
-:SetNoAnonymaous
+:SendliveSetNoAnonymaous
 ```
 
 で184の解除、
 
 ```
-:SetAnonymaous
+:SendliveSetAnonymaous
 ```
 
 で184の再設定、
 
 ```
-:IsAnonymaous
+:SendliveIsAnonymaous
 ```
 
 で確認ができます。
@@ -74,6 +60,6 @@ SendNicoliveがニコニコのコメントサーバに接続します。
 例えば、以下のような設定をvimrcに書いておくと便利です。
 
 ```
-nnoremap gl :<C-u>SendToLive <C-^>
+nnoremap gl :<C-u>SendliveMessage <C-^>
 ```
 

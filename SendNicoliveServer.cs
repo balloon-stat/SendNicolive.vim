@@ -134,6 +134,7 @@ namespace SendNicolive
         string userID;
         string token;
         string postkey;
+        string is_premium
         CookieContainer ccNico;
         CommentSocket csock;
 
@@ -147,6 +148,7 @@ namespace SendNicolive
             thread = info["thread"];
             base_time = info["base_time"];
             userID = info["user_id"];
+            is_premium = info["is_premium"];
             csock = new CommentSocket(addr, port, thread);
             token = NicoliveAPI.GetToken(lvID, cc);
         }
@@ -186,19 +188,20 @@ namespace SendNicolive
             var anonymous = "";
             if (anonym)
             {
-                anonymous = "mail=\"184\"";
+                anonymous = " mail=\"184\"";
             }
             
             Int64 serverTimeSpan = Int64.Parse(csock.SrvTime) - Int64.Parse(base_time);
             Int64 localTimeSpan = toUnixTime(DateTime.Now) - toUnixTime(csock.DateTimeStart);
             string vpos = ((serverTimeSpan + localTimeSpan) * 100).ToString();
 
-            string param = String.Format("<chat thread=\"{0}\" ticket=\"{1}\" vpos=\"{2}\" postkey=\"{3}\" user_id=\"{4}\" premium=\"1\" {5}>{6}</chat>\0"
+            string param = String.Format("<chat thread=\"{0}\" ticket=\"{1}\" vpos=\"{2}\" postkey=\"{3}\" user_id=\"{4}\" premium=\"{5}\"{6}>{7}</chat>\0"
                 , thread
                 , csock.Ticket
                 , vpos
                 , postkey
                 , userID
+                , is_premium
                 , anonymous
                 , comment);
             csock.Send(param);
@@ -265,6 +268,7 @@ namespace SendNicolive
             ret.Add("thread", ms.Element("thread").Value);
             ret.Add("base_time", xdoc.Descendants("base_time").Single().Value);
             ret.Add("user_id", xdoc.Descendants("user_id").Single().Value);
+            ret.Add("is_premium", xdoc.Descendants("is_premium").Single().Value);
             ret.Add("comnID", xdoc.Descendants("default_community").Single().Value);
             ret.Add("room_label", xdoc.Descendants("room_label").Single().Value);
             return ret;
