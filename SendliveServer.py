@@ -48,7 +48,7 @@ class SendLiveRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 anonymous = True
             elif query == "noanonymous":
                 anonymous = False
-            self.wfile.write("anonymous: " + anonymous)
+            self.wfile.write("anonymous: " + str(anonymous))
             self.wfile.close()
         elif self.path.startswith("/recv"):
             if commClient == None:
