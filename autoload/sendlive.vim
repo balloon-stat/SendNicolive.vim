@@ -29,17 +29,23 @@ function! sendlive#run()
   let s:sendlive_is_run = 1
 endfunction
 
+function! sendlive#stop()
+  if has("python") && s:sendlive_is_run
+    python SendliveStop()
+  endif
+endfunction
+
 function! sendlive#query(cmd, text)
-  if s:sendlive_is_run
-    let port = g:sendlive_port
-    if has("python")
+  let port = g:sendlive_port
+  if has("python")
+    if s:sendlive_is_run
       let body = iconv(a:text, &encoding, "utf-8")
       execute "python LocalGetRequest.query('".port."','".a:cmd."','".body."')"
     else
-      call s:get(port, a:cmd, a:text)
+      echo "sendlive is not run"
     endif
   else
-    echo "sendlive is not run"
+    call s:get(port, a:cmd, a:text)
   endif
 endfunction
 

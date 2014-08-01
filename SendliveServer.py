@@ -7,6 +7,7 @@ import os, sys, urllib
 sys.path.append(os.getcwd())
 import ConnectNicolive as CN
 
+httpd = None
 commClient = None
 anonymous = False
 
@@ -61,6 +62,7 @@ class SendLiveRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         return
 
 def SendliveRun(port):
+    global httpd
     HandlerClass = SendLiveRequestHandler
     ServerClass  = BaseHTTPServer.HTTPServer
     Protocol     = "HTTP/1.0"
@@ -76,6 +78,16 @@ def SendliveRun(port):
     th = threading.Thread(target=httpd.serve_forever)
     th.daemon = True
     th.start()
+
+def SendliveStop():
+    global commClient
+    global httpd
+    if not commClient is None:
+        commClient.is_connect = False
+        commClient = None
+    if not httpd is None:
+        httpd.shutdown()
+        httpd = None
 
 if False:
 #if __name__ == '__main__':
