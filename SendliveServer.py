@@ -27,6 +27,10 @@ class SendLiveRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             cookie = self.path[self.path.index("=")+1:]
             con = CN.ConnectNicolive(cookie, lvid)
             commClient = CN.CommClient(con)
+            if not commClient.is_connect:
+                print("Can not connect: " + lvid)
+                commClient = None
+                return
             th = threading.Thread(target=commClient.keepSession)
             th.daemon = True
             th.start()

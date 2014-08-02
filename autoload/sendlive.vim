@@ -32,6 +32,7 @@ endfunction
 function! sendlive#stop()
   if has("python") && s:sendlive_is_run
     python SendliveStop()
+    let s:sendlive_is_run = 0
   endif
 endfunction
 

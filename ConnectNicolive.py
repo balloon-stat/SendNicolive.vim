@@ -1,8 +1,6 @@
 #! /usr/bin/python
 # -*- encoding: utf-8 -*-
 
-import os
-import re
 import sys
 import urllib
 import urllib2
@@ -28,6 +26,8 @@ class ConnectNicolive:
         res = self.opener.open(url).read()
         elem = ElementTree.fromstring(res)
 
+        if elem.get("status") != "ok":
+            return None
         addr       = elem.findtext(".//addr")
         port       = elem.findtext(".//port")
         thread     = elem.findtext(".//thread")
@@ -80,7 +80,7 @@ class SendMsgThread(threading.Thread):
                 print "Sendlive buffer is empty."
                 return
             if comc.is_publish():
-                comc.api.sendMsg(comc.msg)
+                print comc.api.sendMsg(comc.msg)
                 comc.msg = ""
             else:
                 comc.sendReq()
@@ -95,6 +95,9 @@ class CommClient:
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.api = apiObj
         info = apiObj.getPlayerStatus()
+        if info is None:
+            self.is_connect = False
+            return
         (addr, port, thread, base_time, user_id, is_premium) = info
         host = socket.gethostbyname(addr)
         self.sock.connect( (host, int(port)) )
