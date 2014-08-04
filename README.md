@@ -28,8 +28,6 @@ javascript:(function(){if(location.href.indexOf("live.nicovideo.jp")==-1){alert(
 
 放送ページを開いた後にブックマークレットを実行すると  
 SendNicoliveがニコニコのコメントサーバに接続します。  
-ただGETリクエストにニコニコのセッションのクッキーの値を平文で載せているので  
-不特定多数の人がLANを使っている場合などは利用しないようにしてください。  
 
 無事、接続できればvimで  
 
