@@ -4,34 +4,27 @@ set cpo&vim
 
 let s:sendlive_is_run = 0
 
+let s:path = expand("<sfile>:p:h")
+python <<EOM
+import sys, vim
+if not vim.eval('s:path') in sys.path:
+  sys.path.append(vim.eval('s:path'))
+EOM
+
 function! sendlive#run()
   if !has("python")
-    echo "if_python is disabled"
+    echoerr "This pulgin needs python"
     return
   endif
-  let path = ""
-  for ph in split(&rtp, ',')
-    if filereadable(ph."/plugin/sendlive.vim")
-      let path = ph
-      break
-    endif
-  endfor
-  if path == ""
-    echo "Can not founc sendlive directory"
-    return
-  endif
-  let save_cwd = getcwd()
-  execute "cd ".path
-  pyfile SendliveServer.py
-  pyfile LocalGetRequest.py
-  execute "python SendliveRun(".g:sendlive_port.")"
-  execute "cd ".save_cwd
+  python import SendliveServer
+  python import LocalGetRequest
+  execute "python SendliveServer.run('".g:sendlive_port."')"
   let s:sendlive_is_run = 1
 endfunction
 
 function! sendlive#stop()
   if has("python") && s:sendlive_is_run
-    python SendliveStop()
+    python SendliveServer.stop()
     let s:sendlive_is_run = 0
   endif
 endfunction
@@ -46,11 +39,11 @@ function! sendlive#query(cmd, text)
       echo "sendlive is not run"
     endif
   else
-    call s:get(port, a:cmd, a:text)
+    call s:get_request(port, a:cmd, a:text)
   endif
 endfunction
 
-function! s:get(port, cmd, text)
+function! s:get_request(port, cmd, text)
   "let command = 'wget -q '
   let command = 'curl -s '
   let body = substitute(a:text, '[^a-zA-Z0-9_.~/-]', '\=s:urlencode_char(submatch(0))', 'g')

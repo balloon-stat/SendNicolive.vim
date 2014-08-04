@@ -80,13 +80,13 @@ class SendMsgThread(threading.Thread):
                 print "Sendlive buffer is empty."
                 return
             if comc.is_publish():
-                print comc.api.sendMsg(comc.msg)
+                res = comc.api.sendMsg(comc.msg)
+                print res
                 comc.msg = ""
             else:
                 comc.sendReq()
                 comc.read()
-                comc.msgtobuf()
-                comc.write()
+                comc.msgWrite()
         except Exception as e:
             print e.message
 
@@ -105,7 +105,6 @@ class CommClient:
         self.base_time = base_time
         self.user_id = user_id
         self.is_premium = is_premium
-        self.buf = ""
         self.prev = ""
         self.count = 0
         self.cntBlock = 0
@@ -119,12 +118,12 @@ class CommClient:
 
     def sendReq(self):
         try:
-            buf = "<thread thread=\"" + self.thread + "\" version=\"20061206\" res_from=\"-1\"/>\0"
-            self.sock.sendall(buf)
+            req = "<thread thread=\"" + self.thread + "\" version=\"20061206\" res_from=\"-1\"/>\0"
+            self.sock.sendall(req)
         except:
             self.is_connect = False
 
-    def msgtobuf(self):
+    def msgWrite(self):
         msg = self.msg
         self.msg = ""
         if self.postkey == "" or self.count - self.cntBlock * 100 > 100:
@@ -137,7 +136,7 @@ class CommClient:
         srvTimeSpan = int(self.srvtime) - int(self.base_time)
         localTimeSpan = int(time.mktime(datetime.datetime.now().timetuple())) - self.datetimeStart
         vpos = str((srvTimeSpan + localTimeSpan) * 100)
-        self.buf = "<chat thread=\"{0}\" ticket=\"{1}\" vpos=\"{2}\" postkey=\"{3}\" user_id=\"{4}\" premium=\"{5}\"{6}>{7}</chat>\0".format(
+        text = "<chat thread=\"{0}\" ticket=\"{1}\" vpos=\"{2}\" postkey=\"{3}\" user_id=\"{4}\" premium=\"{5}\"{6}>{7}</chat>\0".format(
                     self.thread,
                     self.ticket,
                     vpos,
@@ -145,6 +144,7 @@ class CommClient:
                     self.user_id,
                     self.is_premium,
                     anonymous, msg)
+        self.sock.sendall(text)
 
     def read(self):
         res = ""
@@ -176,9 +176,9 @@ class CommClient:
 
             if line.startswith("<chat"):
                 elem = ElementTree.fromstring(line)
-                text = elem.text + "\n"
+                text = elem.text
                 proc(elem.get("no"), elem.get("user_id"), text)
-                if text == "/disconnect\n":
+                if text == "/disconnect":
                     self.close()
                     self.is_connect = False
                     return
@@ -187,11 +187,6 @@ class CommClient:
 
     def writable(self):
         return (len(self.msg) > 0) and self.is_connect
-
-    def write(self):
-        # print "send: " + self.buf.decode("utf-8")
-        self.sock.sendall(self.buf)
-        self.buf = ""
 
     def keepSession(self):
         try:

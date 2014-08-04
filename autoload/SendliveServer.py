@@ -3,13 +3,13 @@
 
 import threading
 import BaseHTTPServer
-import os, sys, urllib
-sys.path.append(os.getcwd())
+import urllib
 import ConnectNicolive as CN
 
 httpd = None
 commClient = None
 anonymous = False
+is_debug = False
 
 class SendLiveRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
@@ -21,7 +21,8 @@ class SendLiveRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.end_headers()
 
         if self.path.startswith("/connect"):
-            if not commClient is None:
+            if not commClient is None and commClient.is_connect:
+                commClient.is_connect = False
                 commClient.close()
             lvid = self.path[self.path.index("?")+1:self.path.index("=")]
             cookie = self.path[self.path.index("=")+1:]
@@ -65,13 +66,13 @@ class SendLiveRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     def log_message(self, format, *args):
         return
 
-def SendliveRun(port):
+def run(port):
     global httpd
     HandlerClass = SendLiveRequestHandler
     ServerClass  = BaseHTTPServer.HTTPServer
     Protocol     = "HTTP/1.0"
 
-    server_address = ('127.0.0.1', port)
+    server_address = ('127.0.0.1', int(port))
 
     HandlerClass.protocol_version = Protocol
     httpd = ServerClass(server_address, HandlerClass)
@@ -83,20 +84,20 @@ def SendliveRun(port):
     th.daemon = True
     th.start()
 
-def SendliveStop():
+def stop():
     global commClient
     global httpd
     if not commClient is None:
         commClient.is_connect = False
+        commClient.close()
         commClient = None
     if not httpd is None:
         httpd.shutdown()
         httpd = None
 
-if False:
-#if __name__ == '__main__':
-    SendliveRun(8000)
+if is_debug and __name__ == '__main__':
+    run('8000')
     while True:
         if raw_input() == 'q':
-            print "close..."
+            print "Quit sendlive"
             break
